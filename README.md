@@ -1,13 +1,9 @@
 # 3d.kalvik.ee
 
-3D-prinditud toodete pood. `index.html` ehitatakse Claude'i admin-lehest („Ekspordi kliendileht“).
+3D-prinditud toodete pood, majutatud **Cloudflare Pages**-is (projekt `3d-pood`, ehitab GitHubi `main` harust).
+`public/index.html` ehitatakse Claude'i admin-lehest („Ekspordi kliendileht“).
 
-- `netlify/functions/pay.mjs` – allkirjastab LHV LinkPay makselingi (summa, tellimuse nr, nimi, e-post eeltäidetud).
-- Netlify keskkonnamuutujad: `LHV_API_SECRET` (kohustuslik), `LHV_LINKPAY_TOKEN` (vaikimisi `kzgd62vazd`).
-- Tellimused: Netlify Forms, vorm `tellimus`.
-
-## Tellimused Google Sheetsis
-
-`netlify/functions/submission-created.mjs` saadab iga uue tellimuse Google Sheetsi tabelisse
-„3D pood – tellimused” (Apps Script veebirakendus, aadress keskkonnamuutujas `SHEETS_WEBHOOK_URL`).
-Skripti kood: `tools/sheets-apps-script.gs`.
+- `functions/index.js` – võtab vastu tellimusvormi (POST `/`), salvestab varukoopia KV-sse `ORDERS` ja saadab tellimuse Google Sheetsi.
+- `functions/api/pay.js` – allkirjastab LHV LinkPay makselingi (summa, tellimuse nr, nimi, e-post eeltäidetud).
+- Keskkonnamuutujad: `LHV_API_SECRET` (salajane, kohustuslik), `LHV_LINKPAY_TOKEN` (vaikimisi `kzgd62vazd`), `SHEETS_WEBHOOK_URL`.
+- Google Sheetsi Apps Script: `tools/sheets-apps-script.gs` (lisab tellimuse tabelisse ja saadab teavituskirja).
