@@ -1,10 +1,12 @@
 /**
  * 3D pood – tellimused Google Sheetsi.
- * Netlify funktsioon submission-created saadab iga uue tellimuse siia (POST, JSON).
+ * Cloudflare Pages funktsioon (functions/index.js) saadab iga uue tellimuse siia (POST, JSON).
  * Paigaldus: Laiendused → Apps Script → kleebi see kood → Juuruta → Uus juurutus →
  * tüüp "Veebirakendus", käivita kui "Mina", juurdepääs "Kõik". Kopeeri veebirakenduse URL
- * Netlify keskkonnamuutujasse SHEETS_WEBHOOK_URL.
+ * Cloudflare Pages keskkonnamuutujasse SHEETS_WEBHOOK_URL.
  */
+var NOTIFY_TO = '3d@kalvik.ee';
+
 function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -41,6 +43,18 @@ function doPost(e) {
         known.push(it.name);
       }
     });
+    // teavituskiri poe postkasti
+    try {
+      var rowsTxt = (o.items || []).map(function (it) { return '- ' + (it.qty || 1) + ' × ' + it.name + (it.color ? ' (' + it.color + ')' : '') + ' – ' + num(it.price).toFixed(2) + ' €'; }).join('\n');
+      MailApp.sendEmail({
+        to: NOTIFY_TO,
+        replyTo: email || NOTIFY_TO,
+        subject: 'Uus tellimus ' + o.nr + ' – 3d.kalvik.ee',
+        body: 'Tellimus ' + o.nr + '\n\n' + rowsTxt + '\n\nKokku: ' + num(o.total).toFixed(2) + ' € (tooted ' + num(o.subtotal).toFixed(2) + ' €, soodustus ' + num(o.discount).toFixed(2) + ' €' + (o.code ? ' ' + o.code : '') + ', tarne ' + num(o.shipping).toFixed(2) + ' €)' +
+          '\n\nKlient: ' + (o.name || '') + '\nE-post: ' + email + '\nTelefon: ' + (o.tel || '') + '\nKättesaamine: ' + (o.method || '') + (o.place ? ' – ' + o.place : '') + (o.note ? '\nMärkus: ' + o.note : '') +
+          '\n\nTabel: ' + ss.getUrl()
+      });
+    } catch (mailErr) { console.log('Kiri ebaõnnestus: ' + mailErr); }
     return out({ok: true});
   } catch (err) {
     return out({ok: false, error: String(err)});
